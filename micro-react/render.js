@@ -15,7 +15,7 @@ function createDOM(fiber) {
 
 // 开始渲染
 function render(element, container) {
-  console.log('%c render ------> ', 'color:#0f0;', container)
+  console.log('%c render1 ------> ', 'color:#0f0;', container)
   // Root Fiber
   wipRoot = {
     dom: container,
@@ -32,6 +32,7 @@ function render(element, container) {
 // 渲染Root
 // Commit Phase  fiber tree 生成完成 一次commit 进行渲染
 function commitRoot() {
+  console.log('%c commitRoot ------> ', 'color:#0f0;', wipRoot.child)
   deletion.forEach(commitWork)
   commitWork(wipRoot.child)
   // 记录当前fiber tree
@@ -39,22 +40,44 @@ function commitRoot() {
   wipRoot = null
 }
 
-// 渲染fiber
+// 渲染fiber  fiber 对应着具体的 虚拟jsdom
 function commitWork(fiber) {
+  console.log(
+    '%c commitWork ------> ',
+    'color:#0f0;',
+    fiber,
+    fiber && fiber.type,
+  )
   if (!fiber) {
     return
   }
-  const domParent = fiber.parent.dom
+  let domParentFiber = fiber.parent
+  while (!domParentFiber.dom) {
+    domParentFiber = domParentFiber.parent
+  }
+  const domParent = domParentFiber.dom
 
   if (fiber.effectTag === 'PLACEMENT' && fiber.dom) {
     domParent.append(fiber.dom)
   } else if (fiber.effectTag === 'DELETION' && fiber.dom) {
-    domParent.removeChild(fiber.dom)
+    // domParent.removeChild(fiber.dom)
+    commitDeletion(fiber, domParent)
   } else if (fiber.effectTag === 'UPDATE' && fiber.dom) {
     updateDom(fiber.dom, fiber.alternate.props, fiber.props)
   }
-  commitWork(fiber.child)
-  commitWork(fiber.sibling)
+
+  // 如果还有则继续
+  fiber.child && commitWork(fiber.child)
+  fiber.sibling && commitWork(fiber.sibling)
+}
+
+function commitDeletion(fiber, domParent) {
+  if (fiber.dom) {
+    domParent.removeChild(fiber.dom)
+  } else {
+    // 向下寻找最近的dom 因为函数没有dom
+    commitDeletion(fiber.child, domParent)
+  }
 }
 
 const isProperty = (key) => key !== 'children' && !isEvent(key)
@@ -123,27 +146,14 @@ requestIdleCallback(workLoop)
 
 // 执行一个渲染任务单元，并返回新的任务
 function performUnitOfWork(fiber) {
-  // 新建DOM元素
-  if (!fiber.dom) {
-    fiber.dom = createDOM(fiber)
-  }
+  console.log('%c performUnitOfWork2 ------> ', 'color:#0f0;')
+  const isFunctionComponent = fiber.type instanceof Function
 
-  // 给children创建fiber
-  const elements = fiber.props.children
-  // diff
-  reconcileChildren(fiber, elements)
-  // 构建fiber tree
-  // let prevSibling = null
-  // for (let i = 0; i < elements.length; i++) {
-  //   const newFiber = {
-  //     type: elements[i].type,
-  //     props: elements[i].props,
-  //     parent: fiber,
-  //     child: null,
-  //     sibling: null,
-  //     dom: null,
-  //   }
-  // }
+  if (isFunctionComponent) {
+    updateFunctionComponent(fiber)
+  } else {
+    updateHostComponent(fiber)
+  }
 
   // 如果有child，就返回child fiber
   if (fiber.child) {
@@ -162,9 +172,31 @@ function performUnitOfWork(fiber) {
   }
 }
 
-// diff
+// 处理非函数组件
+function updateHostComponent(fiber) {
+  console.log('%c updateHostComponent3 ------> ', 'color:#0f0;', fiber)
+  // 新建DOM元素
+  if (!fiber.dom) {
+    fiber.dom = createDOM(fiber)
+  }
+  // 给children创建fiber
+  const elements = fiber.props.children
+  // diff
+  reconcileChildren(fiber, elements)
+}
+
+// 处理函数组件
+function updateFunctionComponent(fiber) {
+  console.log('%c updateFunctionComponent3 ------> ', 'color:#0f0;', fiber)
+  const children = [fiber.type(fiber.props)]
+  // diff
+  reconcileChildren(fiber, children)
+}
+
+// diff 并且 打上标签  同一层级的去比较
 function reconcileChildren(wipFiber, elements) {
-  console.log('%c reconcileChildren ------> ', 'color:#0f0;')
+  console.log('%c reconcileChildren4 ------> ', 'color:#0f0;')
+  console.log('%c elements ------> ', 'color:#0f0;', elements)
   let index = 0
   let oldFiber = wipFiber.alternate && wipFiber.alternate.child
 

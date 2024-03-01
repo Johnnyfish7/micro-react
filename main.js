@@ -16,28 +16,49 @@
 
 // console.log(element)
 
+// import { createElement, render } from './micro-react'
+
+// const handleChange = (e) => {
+//   renderer(e.target.value)
+// }
+
+// const container = document.querySelector('#root')
+
+// const renderer = (value) => {
+//   const element = createElement(
+//     'div',
+//     null,
+//     createElement('input', {
+//       value: value,
+//       oninput: (e) => {
+//         handleChange(e)
+//       },
+//     }),
+//     createElement('h2', null, value),
+//   )
+
+//   render(element, container)
+// }
+
+// renderer('Hello')
+
+// 函数式
 import { createElement, render } from './micro-react'
 
-const handleChange = (e) => {
-  renderer(e.target.value)
-}
-
 const container = document.querySelector('#root')
-
-const renderer = (value) => {
-  const element = createElement(
-    'div',
+const Test = (props) => {
+  return createElement('h1', null, props.name, createElement('h2', null, 999))
+}
+const App = (props) => {
+  return createElement(
+    'h1',
     null,
-    createElement('input', {
-      value: value,
-      oninput: (e) => {
-        handleChange(e)
-      },
-    }),
-    createElement('h2', null, value),
+    'Hello',
+    props.name,
+    createElement('h2', null, 999),
+    createElement(Test, { name: 'Test' }, null),
   )
-
-  render(element, container)
 }
 
-renderer('Hello')
+const element = createElement(App, { name: 'Kelvin' }, null)
+render(element, container)
