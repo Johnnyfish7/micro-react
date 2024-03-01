@@ -185,12 +185,54 @@ function updateHostComponent(fiber) {
   reconcileChildren(fiber, elements)
 }
 
+let wipFiber = null
+let hookIndex = null
 // 处理函数组件
 function updateFunctionComponent(fiber) {
   console.log('%c updateFunctionComponent3 ------> ', 'color:#0f0;', fiber)
+
+  wipFiber = fiber
+  hookIndex = 0
+  wipFiber.hooks = []
   const children = [fiber.type(fiber.props)]
   // diff
   reconcileChildren(fiber, children)
+}
+
+function useState(init) {
+  console.log('%c useState ------> ', 'color:#0f0;')
+  const oldHook =
+    wipFiber.alternate &&
+    wipFiber.alternate.hooks &&
+    wipFiber.alternate.hooks[hookIndex]
+
+  const hook = {
+    state: oldHook ? oldHook.state : init,
+    queue: [],
+  }
+
+  const actions = oldHook ? oldHook.queue : []
+  actions.forEach((action) => {
+    hook.state = action(hook.state)
+  })
+
+  const setState = (action) => {
+    hook.queue.push(action)
+
+    // 重新设定wipRoot，触发渲染更新
+    // 重新render
+    wipRoot = {
+      dom: currentRoot.dom,
+      props: currentRoot.props,
+      alternate: currentRoot,
+    }
+    nextUnitOfWork = wipRoot
+    deletion = []
+  }
+
+  wipFiber.hooks.push(hook)
+  hookIndex++
+  return [hook.state, setState]
 }
 
 // diff 并且 打上标签  同一层级的去比较
@@ -260,4 +302,5 @@ function reconcileChildren(wipFiber, elements) {
     index++
   }
 }
-export default render
+
+export { render, useState }

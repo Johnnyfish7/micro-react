@@ -43,22 +43,54 @@
 // renderer('Hello')
 
 // 函数式
-import { createElement, render } from './micro-react'
+// import { createElement, render } from './micro-react'
 
+// const container = document.querySelector('#root')
+// const Test = (props) => {
+//   return createElement('h1', null, props.name, createElement('h2', null, 999))
+// }
+// const App = (props) => {
+//   return createElement(
+//     'h1',
+//     null,
+//     'Hello',
+//     props.name,
+//     createElement('h2', null, 999),
+//     createElement(Test, { name: 'Test' }, null),
+//   )
+// }
+
+// const element = createElement(App, { name: 'Kelvin' }, null)
+// render(element, container)
+
+// hook
+import { createElement, render, useState } from './micro-react'
 const container = document.querySelector('#root')
-const Test = (props) => {
-  return createElement('h1', null, props.name, createElement('h2', null, 999))
-}
-const App = (props) => {
+
+const Counter = () => {
+  const [state, setState] = useState(1)
+
   return createElement(
     'h1',
-    null,
-    'Hello',
-    props.name,
-    createElement('h2', null, 999),
-    createElement(Test, { name: 'Test' }, null),
+    {
+      style: {
+        color: 'red',
+      },
+    },
+    state,
+
+    createElement(
+      'button',
+      { onclick: () => setState((prev) => prev + 1) },
+      '增加',
+    ),
+    createElement(
+      'button',
+      { onclick: () => setState((prev) => prev - 1) },
+      '减少',
+    ),
   )
 }
+const element = createElement(Counter)
 
-const element = createElement(App, { name: 'Kelvin' }, null)
 render(element, container)
